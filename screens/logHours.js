@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React, { Component, useState } from 'react'
 import {
     StyleSheet,
     View,
@@ -10,10 +10,50 @@ import {
 import * as Font from 'expo-font'
 import { ScrollView } from 'react-native-gesture-handler'
 import { useNavigation } from '@react-navigation/native'
+import DateTimePicker from '@react-native-community/datetimepicker'
+import { hoursCompleted } from '../fireBaseAPI.js'
+import * as DocumentPicker from 'expo-document-picker'
+import * as ImagePicker from 'expo-image-picker'
+import PdfThumbnail from 'react-native-pdf-thumbnail'
+import firebase from 'firebase/app'
+import 'firebase/firestore'
+import LogHoursSecond from './LogHoursSecond.js'
 
-export default function LogHoursScreen() {
-    const navigation = useNavigation()
+export default function LogHoursScreen({ navigation }) {
+    const [modalVisibility, setModalVisibility] = useState(false)
+    const [date, setDate] = useState(new Date())
+    const [hours, setHours] = useState(0)
+    const [mode, setMode] = useState('date')
+    const [show, setShow] = useState(false)
+    const [totalHours, setTotalHours] = useState(0)
+    const [organization, setOrganization] = useState('')
+    const [description, setDescription] = useState('')
+    const [sponsorNum, setSponsorNum] = useState(0)
+    const [sponsorName, setSponsorName] = useState('')
+    const [sponsorEmail, setSponsorEmail] = useState('')
+    const [dateText, setDateText] = useState('Enter Date Here')
+    const [attachments, setAttachments] = useState([])
+    const [maxImgFlag, setImgFlag] = useState(false)
+    const [uploading, setUploading] = useState(false)
+    const [transferred, setTransferred] = useState(0)
+    const [downloadUrl, setdownloadUrl] = useState([])
+
     const windowHeight = useWindowDimensions().height
+    const onChange = (event, selectedDate) => {
+        const currentDate = selectedDate || date
+        setShow(Platform.OS === 'ios')
+        setDate(currentDate)
+        setDateText(JSON.stringify(date))
+    }
+
+    const showMode = (currentMode) => {
+        setShow(true)
+        setMode(currentMode)
+    }
+
+    const showDatepicker = () => {
+        showMode('date')
+    }
     return (
         <ScrollView>
             <View style={[{ minHeight: Math.round(windowHeight) }]}>
@@ -28,6 +68,9 @@ export default function LogHoursScreen() {
                                     textBreakStrategy="highQuality"
                                     style={styles.placeholder}
                                     paddingLeft={20}
+                                    onChangeText={(text) =>
+                                        setOrganization(text)
+                                    }
                                 ></TextInput>
                                 <Text style={styles.organizationName}>
                                     Organization Name:
@@ -39,7 +82,27 @@ export default function LogHoursScreen() {
                                 textBreakStrategy="highQuality"
                                 style={styles.placeholder1}
                                 paddingLeft={20}
+                                onChangeText={(text) => setDescription(text)}
                             ></TextInput>
+                            <Text style={styles.enterDate}>Date:</Text>
+                            <TouchableOpacity
+                                style={styles.placeholder1}
+                                onPress={showDatepicker}
+                            >
+                                <Text style={{ paddingLeft: 20, top: 20 }}>
+                                    {dateText}
+                                </Text>
+                            </TouchableOpacity>
+                            {show && (
+                                <DateTimePicker
+                                    testID="dateTimePicker"
+                                    value={date}
+                                    mode={mode}
+                                    is24Hour={true}
+                                    display="default"
+                                    onChange={onChange}
+                                />
+                            )}
                             <Text style={styles.sponsor}>Sponsor</Text>
                             <Text style={styles.sponsorName}>
                                 Sponsor Name:
@@ -49,6 +112,7 @@ export default function LogHoursScreen() {
                                 textBreakStrategy="highQuality"
                                 style={styles.placeholder2}
                                 paddingLeft={20}
+                                onChangeText={(text) => setSponsorName(text)}
                             ></TextInput>
                             <Text style={styles.sponsorEmail}>
                                 Sponsor Email:
@@ -58,6 +122,7 @@ export default function LogHoursScreen() {
                                 textBreakStrategy="highQuality"
                                 style={styles.placeholder3}
                                 paddingLeft={20}
+                                onChangeText={(text) => setSponsorEmail(text)}
                             ></TextInput>
                             <Text style={styles.sponsorPhone}>
                                 Sponsor Phone:
@@ -67,12 +132,20 @@ export default function LogHoursScreen() {
                                 textBreakStrategy="highQuality"
                                 style={styles.placeholder4}
                                 paddingLeft={20}
+                                onChangeText={(text) => setSponsorNum(text)}
                             ></TextInput>
                             <View style={styles.nextButton}>
                                 <TouchableOpacity
                                     style={styles.submitbutton}
                                     onPress={() =>
-                                        navigation.navigate('LogHoursSecond')
+                                        navigation.navigate('LogHoursSecond', {
+                                            organization: organization,
+                                            description: description,
+                                            sponsorName: sponsorName,
+                                            sponsorEmail: sponsorEmail,
+                                            sponsorNum: sponsorNum,
+                                            date: date,
+                                        })
                                     }
                                 >
                                     <Text style={styles.buttonText}>Next</Text>
@@ -185,14 +258,14 @@ const styles = StyleSheet.create({
     sponsor: {
         // fontFamily: 'roboto-700',
         color: '#121212',
-        marginTop: 22,
+        marginTop: 14,
         marginLeft: 48,
     },
     sponsorName: {
         // fontFamily: 'roboto-regular',
         color: '#121212',
         fontSize: 11,
-        marginTop: 17,
+        marginTop: 14,
         marginLeft: 48,
     },
     placeholder2: {
@@ -225,7 +298,7 @@ const styles = StyleSheet.create({
         //fontFamily: 'roboto-regular',
         color: '#121212',
         fontSize: 11,
-        marginTop: 20,
+        marginTop: 14,
         marginLeft: 41,
     },
     placeholder4: {
@@ -264,7 +337,20 @@ const styles = StyleSheet.create({
         flex: 1,
         marginRight: -354,
         marginLeft: 9,
-
+        bottom: 20,
         //marginTop: 67,
+    },
+    dateTimePicker: {
+        height: 56,
+        width: 284,
+        borderRadius: 20,
+        backgroundColor: 'rgba(15,15, 15,0.07)',
+        marginLeft: 36,
+    },
+    enterDate: {
+        color: '#121212',
+        fontSize: 11,
+        marginTop: 14,
+        marginLeft: 48,
     },
 })

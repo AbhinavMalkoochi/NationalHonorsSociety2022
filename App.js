@@ -13,7 +13,9 @@ import LogHoursScreen from './screens/logHours'
 import LogHoursSecond from './screens/LogHoursSecond'
 import apiKeys from './config/keys.js'
 import * as firebase from 'firebase'
-
+import DrawerNav from './screens/dashboard'
+import StudentClassroomView from './screens/StudentClassroomView'
+import ClassroomScreen from './screens/classroom'
 export default function App() {
     const Stack = createStackNavigator()
     if (!firebase.apps.length) {
@@ -59,17 +61,39 @@ export default function App() {
                     }}
                 />
                 <Stack.Screen
-                    name="LogHours"
+                    name="logHours"
                     component={LogHoursScreen}
                     options={{
-                        headerShown: false,
+                        title: 'Log Hours',
+                        headerShown: 'true',
                     }}
                 />
+
                 <Stack.Screen
                     name="LogHoursSecond"
                     component={LogHoursSecond}
                     options={{
-                        headerShown: false,
+                        drawerItemStyle: {
+                            display: 'none',
+                        },
+                    }}
+                />
+                <Stack.Screen
+                    name="Classroom"
+                    component={ClassroomScreen}
+                    options={{
+                        drawerItemStyle: {
+                            display: 'none',
+                        },
+                    }}
+                />
+                <Stack.Screen
+                    name="StudentClassroomView"
+                    component={StudentClassroomView}
+                    options={{
+                        drawerItemStyle: {
+                            display: 'none',
+                        },
                     }}
                 />
             </Stack.Navigator>

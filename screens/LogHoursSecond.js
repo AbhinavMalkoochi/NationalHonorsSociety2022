@@ -1,53 +1,268 @@
-import React, { Component } from 'react'
+import React, { Component, useState, useEffect } from 'react'
+import * as DocumentPicker from 'expo-document-picker'
+import * as ImagePicker from 'expo-image-picker'
+import firebase from 'firebase/app'
+import 'firebase/firestore'
+require('firebase/auth')
+require('firebase/database')
+import { hoursCompleted } from '../fireBaseAPI.js'
+import PdfThumbnail from 'react-native-pdf-thumbnail'
 import {
     StyleSheet,
     View,
     Text,
     TextInput,
     TouchableOpacity,
+    Modal,
+    FlatList,
+    Button,
+    Image,
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-export default function LogHoursSecond() {
+import normalize from 'react-native-normalize'
+
+const LogHoursSecond = ({ route }) => {
+    const [dateText, setDateText] = useState('Enter Date Here')
+    const [attachments, setAttachments] = useState([])
+    const [maxImgFlag, setImgFlag] = useState(false)
+    const [uploading, setUploading] = useState(false)
+    const [transferred, setTransferred] = useState(0)
+    const [downloadUrl, setdownloadUrl] = useState([])
+    const [totalHours, setTotalHours] = useState(0)
+    const [hours, setHours] = useState(0)
+    const [modalVisibility, setModalVisibility] = useState(false)
+    const [organization, setOrganization] = useState('')
+    const [description, setDescription] = useState('')
+    const [sponsorName, setSponsorName] = useState('')
+    const [sponsorEmail, setSponsorEmail] = useState('')
+    const [sponsorNum, setSponsorNum] = useState('')
+    const [date, setDate] = useState('')
     const navigation = useNavigation()
+    useEffect(() => {
+        const {
+            organization,
+            description,
+            sponsorName,
+            sponsorEmail,
+            sponsorNum,
+            date,
+        } = route?.params || {}
+        setOrganization(organization)
+        setDescription(description)
+        setSponsorName(sponsorName)
+        setSponsorEmail(sponsorEmail)
+        setSponsorNum(sponsorNum)
+        setDate(date)
+    }, [])
+
+    const documentPick = async () => {
+        const res = await DocumentPicker.getDocumentAsync({ type: '*/*' })
+        const uri = res.uri
+        const filePath = res.uri
+        const page = 0
+        setAttachments([...attachments, filePath])
+    }
+
+    const uploadLink = () => {}
+    /*
+  useEffect(() => {
+    if (route.params?.image) {
+      setAttachments([...attachments,image])
+    }
+  }, [route.params?.image]);
+  */
+
+    const pickImage = async () => {
+        // Ask the user for the permission to access the media library
+        const permissionResult =
+            await ImagePicker.requestMediaLibraryPermissionsAsync()
+
+        if (permissionResult.granted === false) {
+            alert("You've refused to allow this ap to access your photos!")
+            return
+        }
+        if (attachments.length == 3) {
+            setImgFlag(true)
+
+            permissionResult.granted == false
+        }
+        const result = await ImagePicker.launchImageLibraryAsync()
+
+        // Explore the result
+
+        if (!result.cancelled) {
+            const downloadURLs = uploadImage(result)
+            setdownloadUrl([...downloadUrl, downloadURLs])
+            setAttachments([...attachments, result.uri])
+        }
+    }
+
+    const submitHours = () => {
+        setTotalHours(parseInt(totalHours))
+        if (downloadUrl.length == 2) {
+            downloadUrl[3] = null
+        } else if (downloadUrl.length == 1) {
+            downloadUrl[2] = null
+            downloadUrl[3] = null
+        }
+        setTotalHours(totalHours + hours)
+        hoursCompleted(
+            hours,
+            date,
+            totalHours,
+            organization,
+            description,
+            sponsorName,
+            sponsorEmail,
+            sponsorNum,
+            downloadUrl[0],
+            downloadUrl[1],
+            downloadUrl[2]
+        )
+        setAttachments([])
+    }
+    const removeAttachment = (index) => {
+        const arr = [
+            ...attachments.slice(0, index),
+            ...attachments.slice(index + 1),
+        ]
+        setAttachments(arr)
+    }
+    const uploadImage = async (photo) => {
+        const uri = photo.uri
+        const childPath = `data/${
+            firebase.auth().currentUser.uid
+        }/${Math.random().toString(36)}`
+        const response = await fetch(uri)
+        const blob = await response.blob()
+
+        const snapshot = await firebase
+            .storage()
+            .ref()
+            .child(childPath)
+            .put(blob)
+        const downloadURL = await snapshot.ref.getDownloadURL()
+        return downloadURL
+    }
     return (
         <View style={styles.container}>
-            <View style={styles.rect1}>
-                <Text style={styles.logHours1}>Log Hours</Text>
-                <Text style={styles.log2}>Log</Text>
-                <View style={styles.enterHoursHereStack}>
-                    <Text style={styles.enterHoursHere}>Enter Hours here:</Text>
+            <View style={styles.rectContainer}>
+                <View style={styles.rect1}>
+                    <Text style={styles.logHours1}>Log Hours</Text>
+                    <Text style={styles.log2}>Log</Text>
+                    <Text style={styles.sponsorName}>{organization}</Text>
                     <TextInput
-                        placeholder="Ex: 3"
+                        placeholder="Ex: "
                         textBreakStrategy="highQuality"
-                        keyboardType="numeric"
-                        style={styles.placeholder1}
+                        style={styles.placeholder2}
+                        paddingLeft={20}
+                        onChangeText={(text) => setHours(text)}
                     ></TextInput>
-                </View>
-                <Text style={styles.date}>Date:</Text>
-                <TextInput
-                    placeholder="Ex: "
-                    textBreakStrategy="highQuality"
-                    style={styles.placeholder2}
-                ></TextInput>
-                <Text style={styles.attachments}>Attachments</Text>
-                <TextInput
-                    placeholder="Ex: "
-                    textBreakStrategy="highQuality"
-                    style={styles.placeholder3}
-                ></TextInput>
-                <View style={styles.nextButton}>
+
+                    <Text style={styles.attachments}>{organization} </Text>
                     <TouchableOpacity
-                        style={styles.submitButton}
-                        onPress={navigation.navigate('LogHoursSecond')}
-                    >
-                        <Text style={styles.buttonText}>Next</Text>
-                    </TouchableOpacity>
+                        style={styles.placeholder1}
+                        onPress={() => setModalVisibility(true)}
+                    ></TouchableOpacity>
+                    <View style={styles.nextButton}>
+                        <TouchableOpacity
+                            style={styles.submitButton}
+                            onPress={() => submitHours()}
+                        >
+                            <Text style={styles.buttonText}>Submit</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <Modal visible={modalVisibility} style={{ flex: 1 }}>
+                        <View style={{ alignItems: 'center' }}>
+                            <Text>Add Attachments</Text>
+                            <View style={{ width: '60%' }}>
+                                <Button
+                                    title="close"
+                                    onPress={() => setModalVisibility(false)}
+                                />
+                            </View>
+                            <View style={styles.modalButtons}>
+                                <Button
+                                    title="Upload PDF"
+                                    onPress={() => documentPick()}
+                                    style={{ marginTop: 15 }}
+                                />
+                                <View style={{ marginTop: 15 }}>
+                                    <Button
+                                        title="Upload Link"
+                                        onPress={() => uploadLink()}
+                                    />
+                                </View>
+                                <View style={{ marginTop: 15 }}>
+                                    <Button
+                                        title="Take Image"
+                                        onPress={() => {
+                                            navigation.navigate('PictureScreen')
+                                        }}
+                                    />
+                                </View>
+                                <View style={{ marginTop: 15 }}>
+                                    <Button
+                                        title="Upload Image"
+                                        onPress={() => pickImage()}
+                                    />
+                                    {maxImgFlag ? (
+                                        <Text
+                                            style={{
+                                                position: 'absolute',
+                                                top: '100%',
+                                                left: '0%',
+                                            }}
+                                        >
+                                            MAX OF THREE IMAGES
+                                        </Text>
+                                    ) : null}
+                                </View>
+                            </View>
+                        </View>
+                        <View
+                            style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '30%',
+                                flex: 1,
+                            }}
+                        >
+                            <FlatList
+                                style={{ flex: 1 }}
+                                data={attachments}
+                                renderItem={({ item, index }) => {
+                                    return (
+                                        <View>
+                                            <Image
+                                                source={{ uri: item }}
+                                                style={{
+                                                    height: 100,
+                                                    width: 100,
+                                                }}
+                                            />
+                                            <Button
+                                                title="X"
+                                                onPress={() =>
+                                                    removeAttachment(index)
+                                                }
+                                                style={{
+                                                    height: 100,
+                                                    width: 100,
+                                                }}
+                                            />
+                                        </View>
+                                    )
+                                }}
+                            />
+                        </View>
+                    </Modal>
                 </View>
             </View>
         </View>
     )
 }
-
+export default LogHoursSecond
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -64,7 +279,7 @@ const styles = StyleSheet.create({
     nextButton: {
         width: 150,
         height: 50,
-        marginTop: '10%',
+        marginTop: '70%',
         marginLeft: '55%',
     },
     submitButton: {
@@ -77,15 +292,16 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 30,
     },
+
     rect1: {
-        width: 357,
-        height: 679,
+        width: '100%',
+        height: normalize(679, 'height'),
         backgroundColor: 'rgba(255,255,255,1)',
-        borderWidth: 9,
+        borderWidth: normalize(9),
         borderColor: '#000000',
-        borderRadius: 69,
-        marginTop: 67,
-        marginLeft: 9,
+        borderRadius: normalize(69),
+        marginLeft: normalize(9),
+        top: normalize(7),
     },
     logHours1: {
         // fontFamily: "roboto-700",
@@ -101,7 +317,7 @@ const styles = StyleSheet.create({
         marginLeft: 48,
     },
     enterHoursHere: {
-        top: 0,
+        marginTop: 14,
         left: 12,
         position: 'absolute',
         //fontFamily: "roboto-regular",
@@ -109,15 +325,13 @@ const styles = StyleSheet.create({
         fontSize: 11,
     },
     placeholder1: {
-        top: 12,
-        left: 0,
-        position: 'absolute',
-        //fontFamily: "roboto-regular",
+        //fontFamily: 'roboto-regular',
         color: '#121212',
         height: 56,
         width: 284,
-        borderRadius: 63,
+        borderRadius: 20,
         backgroundColor: 'rgba(15,15, 15,0.07)',
+        marginLeft: 36,
     },
     enterHoursHereStack: {
         width: 284,
@@ -132,15 +346,7 @@ const styles = StyleSheet.create({
         marginTop: 14,
         marginLeft: 48,
     },
-    placeholder2: {
-        //fontFamily: "roboto-regular",
-        color: '#121212',
-        height: 56,
-        width: 284,
-        borderRadius: 63,
-        backgroundColor: 'rgba(15,15, 15,0.07)',
-        marginLeft: 36,
-    },
+
     attachments: {
         //fontFamily: "roboto-regular",
         color: '#121212',
@@ -165,5 +371,22 @@ const styles = StyleSheet.create({
         borderRadius: 27,
         marginTop: 262,
         marginLeft: 208,
+    },
+    sponsorName: {
+        // fontFamily: 'roboto-regular',
+        color: '#121212',
+        fontSize: 11,
+        marginTop: 14,
+        marginLeft: 48,
+    },
+    placeholder2: {
+        //fontFamily: 'roboto-regular',
+        color: '#121212',
+        height: 56,
+        width: 284,
+        borderRadius: 20,
+        backgroundColor: 'rgba(15,15, 15,0.07)',
+        marginTop: 1,
+        marginLeft: 36,
     },
 })

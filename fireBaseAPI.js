@@ -1,7 +1,9 @@
-import * as firebase from 'firebase'
+import firebase from 'firebase/app'
 import 'firebase/firestore'
 import { Alert } from 'react-native'
+import { JumpingTransition } from 'react-native-reanimated'
 import * as RootNavigation from './RootNavigation'
+let ida = ' '
 export async function registration(
     firstName,
     lastName,
@@ -83,6 +85,109 @@ export async function hoursCompleted(
     }
 }
 
+// Creates a new classroom document
+export async function createClasroomFb(
+    classroomName,
+    classroomCode,
+    teacherName,
+    teacherEmail,
+    userID
+) {
+    try {
+        const currentUser = firebase.auth().currentUser
+        const db = firebase.firestore()
+        db.collection('classroom').doc().set({
+            Classroom_Name: classroomName,
+            Classroom_Code: classroomCode,
+            teacherName: teacherName,
+            teacherEmail: teacherEmail,
+            teacherID: userID,
+        })
+    } catch (err) {
+        Alert.alert('There is something wrong!!!!', err.message)
+    }
+}
+
+// Returns the clasroom document with the given classroom code
+export async function joinClasroomFb(joinCode) {
+    try {
+        const db = firebase.firestore()
+        return await db
+            .collection('classroom')
+            .where('Classroom_Code', '==', joinCode)
+            .get()
+            .then((querySnapshot) => {
+                if (!querySnapshot.empty) {
+                    return querySnapshot.docs[0].id
+                }
+            })
+            .catch((error) => {
+                Alert.alert('Error getting documents: ', error.message)
+            })
+    } catch (err) {
+        Alert.alert('There is something wrong!!!!', err.message)
+    }
+}
+
+export async function joinClassHelper(joinCode, currentUserUID) {
+    let log = ' '
+    log = await joinClasroomFb(joinCode)
+    studentClassDoc(log, currentUserUID)
+}
+
+// Adds the student to the classroom doc
+export async function studentClassDoc(classroomDocID, currentUserUID) {
+    const db = firebase.firestore()
+    let docRef = db.collection('users').doc(currentUserUID)
+    try {
+        db.collection('classroom')
+            .doc(classroomDocID)
+            .collection('students')
+            .doc(JSON.stringify(currentUserUID))
+            .set({ studentReference: currentUserUID })
+    } catch (err) {
+        Alert.alert('There is something wrong 2!!!!', err.message)
+    }
+    studentClassAssign(classroomDocID, currentUserUID)
+}
+
+// Adds classroom ID to student doc
+export async function studentClassAssign(classroomDocID, currentUserUID) {
+    const db = firebase.firestore()
+    try {
+        db.collection('users')
+            .doc(currentUserUID)
+            .collection('classrooms')
+            .doc(classroomDocID)
+            .set({ classroomDocID: classroomDocID })
+    } catch (err) {
+        Alert.alert('There is something wrong 2!!!!', err.message)
+    }
+}
+
+/*
+const getDate = () => {
+    documentRef.get().toPromise()
+    return Promise((resolve, reject) => {
+        var documentRef = db.collection('users').doc(currentUser.uid)
+        teacherID = currentUser.uid
+        documentRef
+            .get()
+            .toPromise()
+            .then((doc) => {
+                teacherName = doc.data().firstName
+                teacherEmail = doc.data().emailAddress
+                teacherPhone = doc.data().phoneNumber
+                resolve(firstName)
+                resolve(emailAddress)
+                resolve(phoneNumber)
+            })
+            .catch(function (error) {
+                console.log('Error getting document:', error)
+                reject(err)
+            })
+    })
+}*/
 export async function signIn(username, password) {
     try {
         await firebase.auth().signInWithEmailAndPassword(username, password)

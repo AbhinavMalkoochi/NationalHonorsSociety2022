@@ -1,11 +1,5 @@
-import { registerRootComponent } from 'expo'
-import React from 'react'
-import { View } from 'react-native'
+import { AppRegistry } from 'react-native'
+import App from './App.js'
 
-class App extends React.Component {
-    render() {
-        return <View />
-    }
-}
-
-registerRootComponent(App)
+AppRegistry.registerComponent("main", () => App)
+export default { App}

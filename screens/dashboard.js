@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { StyleSheet, Text, View, __spread } from 'react-native'
-import { useNavigation } from '@react-navigation/native'
+import { NavigationContainer, useNavigation } from '@react-navigation/native'
 import firebase from 'firebase/app'
 import SubmitReg from '../assets/custom_buttons/submitreg'
 import { logOut } from '../fireBaseAPI.js'
@@ -9,7 +9,9 @@ import LogHoursScreen from '../screens/logHours'
 import AnnouncementScreen from '../screens/announcements'
 import { createDrawerNavigator } from '@react-navigation/drawer'
 import 'firebase/auth'
-
+import LogHoursSecond from './LogHoursSecond'
+import StudentClassroomView from './StudentClassroomView'
+import App from '../App'
 const wait = (timeout) => {
     return new Promise((resolve) => {
         setTimeout(resolve, timeout)
@@ -95,6 +97,24 @@ export default function DrawerNav() {
                 options={{
                     title: 'Announcements',
                     headerShown: 'true',
+                }}
+            />
+            <Drawer.Screen
+                name="LogHoursSecond"
+                component={LogHoursSecond}
+                options={{
+                    drawerItemStyle: {
+                        display: 'none',
+                    },
+                }}
+            />
+            <Drawer.Screen
+                name="StudentClassroomView"
+                component={StudentClassroomView}
+                options={{
+                    drawerItemStyle: {
+                        display: 'none',
+                    },
                 }}
             />
         </Drawer.Navigator>
