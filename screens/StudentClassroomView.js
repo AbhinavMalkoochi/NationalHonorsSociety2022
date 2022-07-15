@@ -28,39 +28,7 @@ export default function StudentClassroomView({ route }) {
     const [studentID, setStudentID] = useState([])
     const [loading, setLoading] = useState(false)
     const [isTeacher, setIsTeacher] = useState(false)
-    useEffect(() => {}, [])
-    {
-        /*  useEffect(() => {
-        const data = []
 
-        const user = firebase
-            .firestore()
-            .collection('classroom')
-            .doc(classroomDocID)
-            .collection('students')
-            .onSnapshot((querySnapshot) => {
-                querySnapshot.forEach((documentSnapshot) => {
-                    data.push({
-                        ...documentSnapshot.data(),
-                        key: documentSnapshot.id,
-                    })
-                })
-
-                setStudentID(data)
-            })
-        return () => user()
-    }, [])
-
-    useEffect(() => {
-        const studentRef = []
-        const db = firebase.firestore()
-        for (let i = 0; i < studentID.length; i++) {
-            let item = studentID[i].studentReference
-            studentRef.push(db.collection('users').doc(`${item}`).get())
-        }
-        setStudents(studentRef) // Unsubscribe from events when no longer in use
-    }, [studentID])*/
-    }
     useEffect(() => {
         const {
             teacherName,

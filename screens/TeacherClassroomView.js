@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import {
-    View,
     Text,
+    View,
     FlatList,
     TouchableOpacity,
     StyleSheet,
