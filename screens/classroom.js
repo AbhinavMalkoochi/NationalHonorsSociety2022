@@ -37,6 +37,9 @@ export default function ClassroomScreen() {
     const [classroomObj, setClassroomObj] = useState([])
     const [forceReload, setForceReload] = useState(false)
     const [joinFlag, setJoinFlag] = useState(false)
+    const classroomRef = []
+    const [error, setError] = useState('')
+
     useEffect(() => {
         async function getData() {
             let doc = await firebase
@@ -77,77 +80,147 @@ export default function ClassroomScreen() {
         joinClassHelper(joinCode, currentUserUID)
         setJoinFlag(true)
     }
+    {
+        /* useEffect(() => {
+        const dataUpdate = async () => {
+            setLoading(true)
+            const data = []
+            let a = await firebase
+                .firestore()
+                .collection('users')
+                .doc(currentUserUID)
+                .collection('classrooms')
+                .get()
 
-    useLayoutEffect(() => {
-        const data = []
-        const user = firebase
-            .firestore()
-            .collection('users')
-            .doc(currentUserUID)
-            .collection('classrooms')
-            .onSnapshot((querySnapshot) => {
-                querySnapshot.forEach((documentSnapshot) => {
-                    data.push({
-                        ...documentSnapshot.data(),
-                        key: documentSnapshot.id,
-                    })
+            a.forEach((doc) => {
+                data.push({
+                    ...doc.data(),
+                    key: doc.id,
                 })
             })
-        setClassrooms(data)
-
-        /*
-        classrooms.map((item) => {
-            try {
-                const db = firebase.firestore()
-                db.collection('classroom')
-                    .where(
-                        firebase.firestore.FieldPath.documentId(),
-                        '==',
-                        item.classroomDocID
-                    )
-                       .limit(1)
-                    .get()
-                    .then((querySnapshot) => {
-                        classroomRef.push({
-                            ...querySnapshot.documentSnapshot.data(),
-                            key: querySnapshot.documentSnapshot.id,
-                        })
-                    })
-                    .catch((error) => {
-                        Alert.alert('Error getting documents: ', error.message)
-                    })
-            } catch (err) {
-                Alert.alert('There is something wrong!!!!', err.message)
-            }
-        })
-*/
-
-        return () => user()
-    }, [])
-
-    useEffect(() => {
-        const classroomRef = []
-        for (let i = 0; i < classrooms.length; i++) {
-            let item = classrooms[i].classroomDocID
-            try {
-                firebase
+            setClassrooms(data)
+            const promises = []
+            promises = classrooms.map((classroom) => {
+                let item = classroom[i].classroomDocID
+                    await firebase
                     .firestore()
                     .collection('classroom')
                     .doc(item)
                     .get()
-                    .then((documentSnapshot) => {
-                        classroomRef.push(documentSnapshot.data())
-                    })
                     .catch((error) => {
-                        Alert.alert('Error getting documents: ', error.message)
+                        Alert.alert(
+                            'Error getting documents: ',
+                            error.message
+                        )
                     })
-            } catch (err) {
-                Alert.alert('There is something wrong!!!!', err.message)
-            }
+                })            
+                Promise.all(promises).then((items)=>{setClassroomObj(items)}).catch((error)=>{Alert.alert('Error getting documents: ', error.message)})
+
         }
-        //classroomRef.push(db.collection('classroom').doc(`${item}`).get())
-        setClassroomObj(classroomRef) // Unsubscribe from events when no longer in use
+        dataUpdate().catch((err) => {
+            Alert.alert('There is something wrong!!!!', err.message)
+        })
+    }, [])*/
+    }
+
+    useEffect(() => {
+        return firebase
+            .firestore()
+            .collection('users')
+            .doc(currentUserUID)
+            .collection('classrooms')
+            .onSnapshot(
+                async (snapshot) => {
+                    const userClassrooms = []
+                    for (let classroom of snapshot.docs) {
+                        const ID = await firebase
+                            .firestore()
+                            .collection('classroom')
+                            .doc(classroom.data().classroomDocID)
+                            .get()
+
+                        userClassrooms.push({
+                            ...ID.data(),
+                            identification: classroom.data(),
+                            ID: classroom.id,
+                        })
+                    }
+                    setLoading(false)
+                    setClassrooms(userClassrooms)
+                },
+                (error) => {
+                    setLoading(false)
+                    setError(error.message)
+                }
+            )
+    }, [])
+
+    {
+        /*
+            for (let i = 0; i < classrooms.length; i++) {
+                let item = classrooms[i].classroomDocID
+                try {
+                    let a = await firebase
+                        .firestore()
+                        .collection('classroom')
+                        .doc(item)
+                        .get()
+                        .catch((error) => {
+                            Alert.alert(
+                                'Error getting documents: ',
+                                error.message
+                            )
+                        })
+                        
+                    classroomRef.push(a.data())
+                } catch (err) {
+                    setLoading(false)
+                    Alert.alert('There is something wrong!!!!', err.message)
+                }
+            }
+            //classroomRef.push(db.collection('classroom').doc(`${item}`).get())
+            setClassroomObj(classroomRef) // Unsubscribe from events when no longer in use
+
+            
+useEffect(() => {
+        const refUpdate = async () => {
+            for (let i = 0; i < classrooms.length; i++) {
+                let item = classrooms[i].classroomDocID
+                try {
+                    let a = await firebase
+                        .firestore()
+                        .collection('classroom')
+                        .doc(item)
+                        .get()
+                        .catch((error) => {
+                            Alert.alert(
+                                'Error getting documents: ',
+                                error.message
+                            )
+                        })
+                    classroomRef.push(a.data())
+                } catch (err) {
+                    setLoading(false)
+                    Alert.alert('There is something wrong!!!!', err.message)
+                }
+            }
+            //classroomRef.push(db.collection('classroom').doc(`${item}`).get())
+            setClassroomObj(classroomRef) // Unsubscribe from events when no longer in use
+        }
+        refUpdate().catch((err) => {
+            Alert.alert('There is something wrong!!!!', err.message)
+        })
     }, [classrooms])
+
+
+
+*/
+    }
+
+    const modalHandler = () => {
+        setModalDrop(true)
+    }
+
     {
         /*
   birthdays.map((item) => {
@@ -218,95 +291,119 @@ export default function ClassroomScreen() {
 
 */
     }
-
-    return (
-        <View style={styles.container}>
-            <View style={styles.rect}>
-                <FlatList
-                    style={{ flex: 1 }}
-                    data={classroomObj}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity
-                            onPress={() =>
-                                navigation.navigate('StudentClassroomView', {
-                                    teacherName: item.teacherName,
-                                    teacherID: item.teacherID,
-                                    classroomCode: item.Classroom_Code,
-                                    classroomDocID: item.getID(),
-                                    classroomName: item.Classroom_Name,
-                                    teacherEmail: item.teacherEmail,
-                                })
-                            }
-                            style={styles.classroomBox}
-                        >
-                            <Text style={styles.classroomTitle}>
-                                {classrooms.length}
-                            </Text>
-                        </TouchableOpacity>
-                    )}
-                />
-
-                <TouchableOpacity
-                    style={styles.buttonContainer}
-                    onPress={() => setModalDrop(true)}
-                >
-                    <Image
-                        source={require('../assets/images/AddButton.png')}
-                        resizeMode="contain"
-                        style={{ width: 35, height: 35 }}
+    const studentTeacherHandler = ({ item }) => {
+        if (JSON.stringify(currentUserUID) == JSON.stringify(item.teacherID)) {
+            navigation.navigate('TeacherClassroomView', {
+                teacherName: item.teacherName,
+                teacherID: item.teacherID,
+                classroomCode: item.Classroom_Code,
+                classroomDocID: item.ID,
+                classroomName: item.Classroom_Name,
+                teacherEmail: item.teacherEmail,
+            })
+        } else {
+            navigation.navigate('StudentClassroomView', {
+                teacherName: item.teacherName,
+                teacherID: item.teacherID,
+                classroomCode: item.Classroom_Code,
+                classroomDocID: item.ID,
+                classroomName: item.Classroom_Name,
+                teacherEmail: item.teacherEmail,
+            })
+        }
+    }
+    if (classrooms.length <= 0) {
+        return (
+            <View>
+                <Text>loading</Text>
+            </View>
+        )
+    } else {
+        return (
+            <View style={styles.container}>
+                <View style={styles.rect}>
+                    <FlatList
+                        style={{ flex: 1 }}
+                        data={classrooms}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                onPress={() => studentTeacherHandler({ item })}
+                                style={styles.classroomBox}
+                            >
+                                <Text style={styles.classroomTitle}>
+                                    {item.ID}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
                     />
-                </TouchableOpacity>
-                <Modal visible={modalDropFlag}>
-                    <View
-                        style={{
-                            flex: 1,
-                            flexDirection: 'column',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                        }}
+
+                    <TouchableOpacity
+                        style={styles.buttonContainer}
+                        onPress={() => modalHandler()}
                     >
-                        <Text
-                            textAlignVertical="top"
-                            textAlign="center"
-                            style={{ top: '5%' }}
+                        <Image
+                            source={require('../assets/images/AddButton.png')}
+                            resizeMode="contain"
+                            style={{ width: 35, height: 35 }}
+                        />
+                    </TouchableOpacity>
+                    <Modal visible={modalDropFlag}>
+                        <View
+                            style={{
+                                flex: 1,
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                            }}
                         >
-                            {joinCode}
-                        </Text>
-                        <View style={styles.inputStack}>
-                            <Text>Enter Join Code{classroomObj.length}</Text>
-                            <TextInput
-                                paddingLeft={20}
-                                style={styles.textInputStack}
-                                onChangeText={(text) => setJoinCode(text)}
-                            ></TextInput>
-                            <Button
-                                title="Submit"
-                                onPress={() => onJoinSubmit()}
-                            />
-                            <Text style={{ paddingTop: 50 }}>
-                                Enter Classroom Name
-                                {classroomObj.length}
+                            <Text
+                                textAlignVertical="top"
+                                textAlign="center"
+                                style={{ top: '5%' }}
+                            >
+                                {joinCode}
                             </Text>
-                            <TextInput
-                                paddingLeft={20}
-                                style={styles.textInputStack}
-                                onChangeText={(text) => createClassroom(text)}
-                            ></TextInput>
+                            <View style={styles.inputStack}>
+                                <Text>
+                                    Enter Join Code
+                                    {classrooms[0].classroomDocID}
+                                </Text>
+                                <TextInput
+                                    paddingLeft={20}
+                                    style={styles.textInputStack}
+                                    onChangeText={(text) => setJoinCode(text)}
+                                ></TextInput>
+                                <Button
+                                    title="Submit"
+                                    onPress={() => onJoinSubmit()}
+                                />
+                                <Text style={{ paddingTop: 50 }}>
+                                    Enter Classroom Name
+                                    {classrooms.length}
+                                </Text>
+                                <TextInput
+                                    paddingLeft={20}
+                                    style={styles.textInputStack}
+                                    onChangeText={(text) =>
+                                        createClassroom(text)
+                                    }
+                                ></TextInput>
+                                <Button
+                                    title="Submit"
+                                    onPress={() => onCreateSubmit()}
+                                />
+                            </View>
+
                             <Button
-                                title="Submit"
-                                onPress={() => onCreateSubmit()}
+                                title="Close"
+                                onPress={() => setModalDrop(false)}
                             />
                         </View>
-
-                        <Button
-                            title="Close"
-                            onPress={() => setModalDrop(false)}
-                        />
-                    </View>
-                </Modal>
+                    </Modal>
+                </View>
             </View>
-        </View>
-    )
+        )
+    }
 }
 
 const styles = StyleSheet.create({

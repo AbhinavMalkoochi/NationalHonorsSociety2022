@@ -48,7 +48,7 @@ function Dashboard() {
             }
         }
         getData()
-    })
+    }, [])
 
     const logOutButton = () => {
         logOut()

@@ -15,7 +15,7 @@ import {
 } from 'react-native'
 import 'firebase/auth'
 import firebase from 'firebase/app'
-export default function StudentClassroomView({ route }) {
+export default function TeacherClassroomView({ route }) {
     const navigation = useNavigation()
     const [classroomName, setClassroomName] = useState('')
     const [classroomCode, setClassroomCode] = useState('')
@@ -27,40 +27,7 @@ export default function StudentClassroomView({ route }) {
     const [students, setStudents] = useState([])
     const [studentID, setStudentID] = useState([])
     const [loading, setLoading] = useState(false)
-    const [isTeacher, setIsTeacher] = useState(false)
-    useEffect(() => {}, [])
-    {
-        /*  useEffect(() => {
-        const data = []
 
-        const user = firebase
-            .firestore()
-            .collection('classroom')
-            .doc(classroomDocID)
-            .collection('students')
-            .onSnapshot((querySnapshot) => {
-                querySnapshot.forEach((documentSnapshot) => {
-                    data.push({
-                        ...documentSnapshot.data(),
-                        key: documentSnapshot.id,
-                    })
-                })
-
-                setStudentID(data)
-            })
-        return () => user()
-    }, [])
-
-    useEffect(() => {
-        const studentRef = []
-        const db = firebase.firestore()
-        for (let i = 0; i < studentID.length; i++) {
-            let item = studentID[i].studentReference
-            studentRef.push(db.collection('users').doc(`${item}`).get())
-        }
-        setStudents(studentRef) // Unsubscribe from events when no longer in use
-    }, [studentID])*/
-    }
     useEffect(() => {
         const {
             teacherName,
@@ -116,16 +83,23 @@ export default function StudentClassroomView({ route }) {
     } else {
         return (
             <View>
-                <Text>Teacher Name: {students[0].firstName}</Text>
+                <Text>Teacher Name: {students[0].firstName} Teacher</Text>
                 <Text>Teacher Email: {email}</Text>
 
                 <FlatList
                     data={students}
                     renderItem={({ item }) => (
-                        <View style={styles.studentContainer}>
+                        <TouchableOpacity
+                            style={styles.studentContainer}
+                            onClick={navigation.navigate(
+                                'StudentVolunteerInfo'
+                            )}
+                        >
                             <Text>{item.firstName}</Text>
                             <Text>{item.lastName}</Text>
-                        </View>
+                            <Text>{item.email}</Text>
+                            <Text>{item.totalHours}</Text>
+                        </TouchableOpacity>
                     )}
                 />
             </View>
