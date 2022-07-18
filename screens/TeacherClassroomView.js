@@ -27,7 +27,9 @@ export default function TeacherClassroomView({ route }) {
     const [students, setStudents] = useState([])
     const [studentID, setStudentID] = useState([])
     const [loading, setLoading] = useState(false)
-
+    const VolunteerPageNavigation = ({ item }) => {
+        navigation.navigate('StudentVolunteerInfo', { item: item })
+    }
     useEffect(() => {
         const {
             teacherName,
@@ -74,6 +76,7 @@ export default function TeacherClassroomView({ route }) {
                 }
             )
     }, [])
+
     if (students.length <= 0) {
         return (
             <View>
@@ -83,7 +86,7 @@ export default function TeacherClassroomView({ route }) {
     } else {
         return (
             <View>
-                <Text>Teacher Name: {students[0].firstName} Teacher</Text>
+                <Text>Teacher Name: {students[0].firstName}</Text>
                 <Text>Teacher Email: {email}</Text>
 
                 <FlatList
@@ -91,13 +94,10 @@ export default function TeacherClassroomView({ route }) {
                     renderItem={({ item }) => (
                         <TouchableOpacity
                             style={styles.studentContainer}
-                            onClick={navigation.navigate(
-                                'StudentVolunteerInfo'
-                            )}
+                            onPress={() => VolunteerPageNavigation({ item })}
                         >
                             <Text>{item.firstName}</Text>
                             <Text>{item.lastName}</Text>
-                            <Text>{item.email}</Text>
                             <Text>{item.totalHours}</Text>
                         </TouchableOpacity>
                     )}
