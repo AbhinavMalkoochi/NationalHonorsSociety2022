@@ -18,6 +18,7 @@ import StudentClassroomView from './screens/StudentClassroomView'
 import ClassroomScreen from './screens/classroom'
 import TeacherClassroomView from './screens/TeacherClassroomView'
 import StudentVolunteerInfo from './screens/StudentVolunteerInfo'
+import SettingsScreen from './screens/SettingsScreen'
 export default function App() {
     const Stack = createStackNavigator()
     if (!firebase.apps.length) {
@@ -110,6 +111,15 @@ export default function App() {
                 <Stack.Screen
                     name="StudentVolunteerInfo"
                     component={StudentVolunteerInfo}
+                    options={{
+                        drawerItemStyle: {
+                            display: 'none',
+                        },
+                    }}
+                />
+                <Stack.Screen
+                    name="SettingsScreen"
+                    component={SettingsScreen}
                     options={{
                         drawerItemStyle: {
                             display: 'none',

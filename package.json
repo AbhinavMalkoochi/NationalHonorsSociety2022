@@ -15,6 +15,7 @@
         "@react-navigation/native": "^6.0.6",
         "@react-navigation/stack": "^6.0.11",
         "add": "^2.0.6",
+        "caniuse-lite": "^1.0.30001367",
         "expo": "~44.0.0",
         "expo-document-picker": "~10.1.0",
         "expo-font": "~10.0.4",
@@ -40,6 +41,7 @@
         "react-native-svg": "^12.1.1",
         "react-native-web": "0.17.1",
         "react-navigation": "^4.4.4",
+        "react-string-replace": "^1.1.0",
         "yarn": "^1.22.17"
     },
     "devDependencies": {

@@ -12,6 +12,7 @@ import {
     TextInput,
     Alert,
     ActivityIndicator,
+    Touchable,
 } from 'react-native'
 import 'firebase/auth'
 import firebase from 'firebase/app'
@@ -24,11 +25,13 @@ export default function TeacherClassroomView({ route }) {
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [teacherID, setTeacherID] = useState('')
-    const [students, setStudents] = useState([])
+    const [students, setStudents] = useState([{}])
     const [studentID, setStudentID] = useState([])
     const [loading, setLoading] = useState(false)
-    const VolunteerPageNavigation = ({ item }) => {
-        navigation.navigate('StudentVolunteerInfo', { item: item })
+    const VolunteerPageNavigation = (item) => {
+        navigation.navigate('StudentVolunteerInfo', {
+            item: item,
+        })
     }
     useEffect(() => {
         const {
@@ -64,7 +67,8 @@ export default function TeacherClassroomView({ route }) {
                         classStudents.push({
                             ...ID.data(),
                             identification: student.data(),
-                            key: student.id,
+                            studentKey: student.data().studentReference,
+                            key: student.data().studentReference,
                         })
                     }
                     setLoading(false)
@@ -76,8 +80,27 @@ export default function TeacherClassroomView({ route }) {
                 }
             )
     }, [])
-
-    if (students.length <= 0) {
+    const promoteStudent = (student) => {
+        setLoading(true)
+        firebase
+            .firestore('classroom')
+            .doc(classroomDocID)
+            .collection('teachers')
+            .doc(student)
+            .set({ teacherID: student })
+        setLoading(false)
+    }
+    const deleteClassroom = () => {
+        setLoading(true)
+        firebase
+            .firestore()
+            .collection('classroom')
+            .doc(classroomDocID)
+            .delete()
+        setLoading(false)
+        navigation.navigate('classroom')
+    }
+    if (students.length <= 0 && !loading) {
         return (
             <View>
                 <Text>loading</Text>
@@ -88,18 +111,29 @@ export default function TeacherClassroomView({ route }) {
             <View>
                 <Text>Teacher Name: {students[0].firstName}</Text>
                 <Text>Teacher Email: {email}</Text>
-
+                <TouchableOpacity onPress={() => deleteClassroom()}>
+                    <Text>Delete Classroom</Text>
+                </TouchableOpacity>
                 <FlatList
                     data={students}
                     renderItem={({ item }) => (
-                        <TouchableOpacity
-                            style={styles.studentContainer}
-                            onPress={() => VolunteerPageNavigation({ item })}
-                        >
-                            <Text>{item.firstName}</Text>
-                            <Text>{item.lastName}</Text>
-                            <Text>{item.totalHours}</Text>
-                        </TouchableOpacity>
+                        <View>
+                            <TouchableOpacity
+                                style={styles.studentContainer}
+                                onPress={() =>
+                                    VolunteerPageNavigation(item.key)
+                                }
+                            >
+                                <Text>{item.key}</Text>
+                                <Text>{}</Text>
+                                <Text>{}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => promoteStudent(item.key)}
+                            >
+                                <Text>Promote to Teacher</Text>
+                            </TouchableOpacity>
+                        </View>
                     )}
                 />
             </View>

@@ -75,10 +75,13 @@ export default function ClassroomScreen() {
             email,
             currentUserUID
         )
+        onJoinSubmit()
+        setForceReload(!forceReload)
     }
     const onJoinSubmit = () => {
         joinClassHelper(joinCode, currentUserUID)
         setJoinFlag(true)
+        setForceReload(!forceReload)
     }
     {
         /* useEffect(() => {
@@ -124,7 +127,7 @@ export default function ClassroomScreen() {
     }
 
     useEffect(() => {
-        return firebase
+        firebase
             .firestore()
             .collection('users')
             .doc(currentUserUID)
@@ -138,13 +141,23 @@ export default function ClassroomScreen() {
                             .collection('classroom')
                             .doc(classroom.data().classroomDocID)
                             .get()
-
-                        userClassrooms.push({
-                            ...ID.data(),
-                            identification: classroom.data(),
-                            ID: classroom.id,
-                        })
+                        if (ID.exists) {
+                            userClassrooms.push({
+                                ...ID.data(),
+                                identification: classroom.data(),
+                                ID: classroom.id,
+                            })
+                        } else {
+                            firebase
+                                .firestore()
+                                .collection('users')
+                                .doc(currentUserUID)
+                                .collection('classrooms')
+                                .doc(classroom.data().classroomDocID)
+                                .delete()
+                        }
                     }
+
                     setLoading(false)
                     setClassrooms(userClassrooms)
                 },
@@ -291,11 +304,47 @@ useEffect(() => {
 
 */
     }
+    const leaveClassroom = (classroomID) => {
+        loading = true
+        firebase
+            .firestore()
+            .collection('classroom')
+            .doc(classroomDocID)
+            .collection('students')
+            .doc(JSON.stringify(classroomID))
+            .delete()
+        firebase
+            .firestore()
+            .collection('users')
+            .doc(currentUserUID)
+            .collection('classrooms')
+            .doc(JSON.stringify(classroomID))
+            .delete()
+        loading = false
+    }
+    const validateTeacher = async ({ item }) => {
+        const db = firebase.firestore()
+        db.collection('classroom')
+            .doc(item.ID)
+            .collection('teachers')
+            .doc(currentUserUID)
+            .get()
+            .then((doc) => {
+                if (doc.exists) {
+                    return true
+                } else {
+                    return false
+                }
+            })
+            .catch((error) => {
+                Alert.alert('Error getting documents: ', error.message)
+            })
+    }
     const studentTeacherHandler = ({ item }) => {
-        if (JSON.stringify(currentUserUID) == JSON.stringify(item.teacherID)) {
+        if (validateTeacher(item)) {
             navigation.navigate('TeacherClassroomView', {
                 teacherName: item.teacherName,
-                teacherID: item.teacherID,
+                teacherID: currentUserUID,
                 classroomCode: item.Classroom_Code,
                 classroomDocID: item.ID,
                 classroomName: item.Classroom_Name,
@@ -312,7 +361,7 @@ useEffect(() => {
             })
         }
     }
-    if (classrooms.length <= 0) {
+    if (loading) {
         return (
             <View>
                 <Text>loading</Text>
@@ -336,10 +385,12 @@ useEffect(() => {
                             </TouchableOpacity>
                         )}
                     />
-
+                    <TouchableOpacity onPress={() => leaveClassroom(item)}>
+                        <Text> Leave</Text>
+                    </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.buttonContainer}
-                        onPress={() => modalHandler()}
+                        onPress={() => modalHandler(item.ID)}
                     >
                         <Image
                             source={require('../assets/images/AddButton.png')}
@@ -364,10 +415,7 @@ useEffect(() => {
                                 {joinCode}
                             </Text>
                             <View style={styles.inputStack}>
-                                <Text>
-                                    Enter Join Code
-                                    {classrooms[0].classroomDocID}
-                                </Text>
+                                <Text>Enter Join Code</Text>
                                 <TextInput
                                     paddingLeft={20}
                                     style={styles.textInputStack}
@@ -379,7 +427,6 @@ useEffect(() => {
                                 />
                                 <Text style={{ paddingTop: 50 }}>
                                     Enter Classroom Name
-                                    {classrooms.length}
                                 </Text>
                                 <TextInput
                                     paddingLeft={20}

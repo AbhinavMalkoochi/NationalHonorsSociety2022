@@ -44,6 +44,7 @@ export default function StudentClassroomView({ route }) {
         setClassroomDocID(classroomDocID)
         setClassroomName(classroomName)
         setEmail(teacherEmail)
+        const classStudents = []
 
         return firebase
             .firestore()
@@ -52,7 +53,6 @@ export default function StudentClassroomView({ route }) {
             .collection('students')
             .onSnapshot(
                 async (snapshot) => {
-                    const classStudents = []
                     for (let student of snapshot.docs) {
                         const ID = await firebase
                             .firestore()
@@ -75,7 +75,25 @@ export default function StudentClassroomView({ route }) {
                 }
             )
     }, [])
-    if (students.length <= 0) {
+    const kickStudent = (ID) => {
+        loading = true
+        firebase
+            .firestore()
+            .collection('classroom')
+            .doc(classroomDocID)
+            .collection('students')
+            .doc(JSON.stringify(ID))
+            .delete()
+        firebase
+            .firestore()
+            .collection('users')
+            .doc(currentUserUID)
+            .collection('classrooms')
+            .doc(JSON.stringify(ID))
+            .delete()
+        loading = false
+    }
+    if (loading) {
         return (
             <View>
                 <Text>loading</Text>
@@ -84,7 +102,7 @@ export default function StudentClassroomView({ route }) {
     } else {
         return (
             <View>
-                <Text>Teacher Name: {students[0].firstName}</Text>
+                <Text>Teacher Name: </Text>
                 <Text>Teacher Email: {email}</Text>
 
                 <FlatList
@@ -93,6 +111,11 @@ export default function StudentClassroomView({ route }) {
                         <View style={styles.studentContainer}>
                             <Text>{item.firstName}</Text>
                             <Text>{item.lastName}</Text>
+                            <TouchableOpacity
+                                onPress={() => kickStudent(item.key)}
+                            >
+                                <Text>Kick</Text>
+                            </TouchableOpacity>
                         </View>
                     )}
                 />

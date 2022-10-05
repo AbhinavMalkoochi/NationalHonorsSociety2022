@@ -96,13 +96,21 @@ export async function createClasroomFb(
     try {
         const currentUser = firebase.auth().currentUser
         const db = firebase.firestore()
-        db.collection('classroom').doc().set({
+        db.collection('classroom').doc(JSON.stringify(classroomCode)).set({
             Classroom_Name: classroomName,
             Classroom_Code: classroomCode,
             teacherName: teacherName,
-            teacherEmail: teacherEmail,
             teacherID: userID,
+            teacherEmail: teacherEmail,
         })
+        db.collection('classroom')
+            .doc(JSON.stringify(classroomCode))
+            .collection('teachers')
+            .set({
+                teacherEmail: teacherEmail,
+                teacherID: userID,
+                teacherName: teacherName,
+            })
     } catch (err) {
         Alert.alert('There is something wrong!!!!', err.message)
     }

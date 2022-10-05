@@ -6,27 +6,20 @@ import SubmitReg from '../assets/custom_buttons/submitreg'
 import { logOut } from '../fireBaseAPI.js'
 import ClassroomScreen from '../screens/classroom'
 import LogHoursScreen from '../screens/logHours'
-import AnnouncementScreen from '../screens/announcements'
 import { createDrawerNavigator } from '@react-navigation/drawer'
 import 'firebase/auth'
 import LogHoursSecond from './LogHoursSecond'
 import StudentClassroomView from './StudentClassroomView'
 import App from '../App'
+import SettingsScreen from './SettingsScreen'
 const wait = (timeout) => {
     return new Promise((resolve) => {
         setTimeout(resolve, timeout)
     })
 }
 function Dashboard() {
-    const [refreshing, setRefreshing] = React.useState(false)
-
-    const onRefresh = React.useCallback(() => {
-        setRefreshing(true)
-
-        wait(2000).then(() => setRefreshing(false))
-    }, [])
     const navigation = useNavigation()
-    let currentUserUID = firebase.auth().currentUser.uid
+    const currentUserUID = firebase.auth().currentUser.uid
     const [firstName, setfirstName] = useState('')
     const [grade, setGrade] = useState('')
     const [totalHours, setTotalHours] = useState(0)
@@ -92,10 +85,10 @@ export default function DrawerNav() {
                 }}
             />
             <Drawer.Screen
-                name="announcements"
-                component={AnnouncementScreen}
+                name="Settings"
+                component={SettingsScreen}
                 options={{
-                    title: 'Announcements',
+                    title: 'Settings',
                     headerShown: 'true',
                 }}
             />

@@ -4,7 +4,7 @@ import * as ImagePicker from 'expo-image-picker'
 import firebase from 'firebase/app'
 import 'firebase/firestore'
 require('firebase/auth')
-require('firebase/database')
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { hoursCompleted } from '../fireBaseAPI.js'
 import PdfThumbnail from 'react-native-pdf-thumbnail'
 import {
@@ -20,6 +20,7 @@ import {
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import normalize from 'react-native-normalize'
+//TODO: if you try to submit a image after you have already submitted a image, it will not work, fix this
 
 const LogHoursSecond = ({ route }) => {
     const [dateText, setDateText] = useState('Enter Date Here')
@@ -37,6 +38,8 @@ const LogHoursSecond = ({ route }) => {
     const [sponsorEmail, setSponsorEmail] = useState('')
     const [sponsorNum, setSponsorNum] = useState('')
     const [date, setDate] = useState('')
+    const [individualDownloadURL, setIndividualDownloadURL] = useState('')
+    const [loading, setLoading] = useState(false)
     const navigation = useNavigation()
     useEffect(() => {
         const {
@@ -65,7 +68,7 @@ const LogHoursSecond = ({ route }) => {
 
     const uploadLink = () => {}
     /*
-  useEffect(() => {
+  useEffect(() => { 
     if (route.params?.image) {
       setAttachments([...attachments,image])
     }
@@ -91,20 +94,17 @@ const LogHoursSecond = ({ route }) => {
         // Explore the result
 
         if (!result.cancelled) {
-            const downloadURLs = uploadImage(result)
-            setdownloadUrl([...downloadUrl, downloadURLs])
+            const downloadURLI = await uploadImage(result)
+
             setAttachments([...attachments, result.uri])
+            setdownloadUrl([...downloadUrl, downloadURLI])
+            setIndividualDownloadURL('')
         }
     }
 
     const submitHours = () => {
         setTotalHours(parseInt(totalHours))
-        if (downloadUrl.length == 2) {
-            downloadUrl[3] = null
-        } else if (downloadUrl.length == 1) {
-            downloadUrl[2] = null
-            downloadUrl[3] = null
-        }
+
         setTotalHours(totalHours + hours)
         hoursCompleted(
             hours,
@@ -120,6 +120,8 @@ const LogHoursSecond = ({ route }) => {
             downloadUrl[2]
         )
         setAttachments([])
+        setdownloadUrl([])
+        setImgFlag(false)
     }
     const removeAttachment = (index) => {
         const arr = [
@@ -128,6 +130,7 @@ const LogHoursSecond = ({ route }) => {
         ]
         setAttachments(arr)
     }
+
     const uploadImage = async (photo) => {
         const uri = photo.uri
         const childPath = `data/${
@@ -135,7 +138,6 @@ const LogHoursSecond = ({ route }) => {
         }/${Math.random().toString(36)}`
         const response = await fetch(uri)
         const blob = await response.blob()
-
         const snapshot = await firebase
             .storage()
             .ref()
@@ -143,124 +145,141 @@ const LogHoursSecond = ({ route }) => {
             .put(blob)
         const downloadURL = await snapshot.ref.getDownloadURL()
         return downloadURL
+        setIndividualDownloadURL(downloadURL)
     }
-    return (
-        <View style={styles.container}>
-            <View style={styles.rectContainer}>
-                <View style={styles.rect1}>
-                    <Text style={styles.logHours1}>Log Hours</Text>
-                    <Text style={styles.log2}>Log</Text>
-                    <Text style={styles.sponsorName}>{organization}</Text>
-                    <TextInput
-                        placeholder="Ex: "
-                        textBreakStrategy="highQuality"
-                        style={styles.placeholder2}
-                        paddingLeft={20}
-                        onChangeText={(text) => setHours(text)}
-                    ></TextInput>
+    if (loading) {
+        return (
+            <View>
+                <Text>Loading</Text>
+            </View>
+        )
+    } else {
+        return (
+            <View style={styles.container}>
+                <View style={styles.rectContainer}>
+                    <View style={styles.rect1}>
+                        <Text style={styles.logHours1}>Log Hours</Text>
+                        <Text style={styles.log2}>
+                            {attachments.length}
+                            {downloadUrl.length}
+                        </Text>
+                        <Text style={styles.sponsorName}>{organization}</Text>
+                        <TextInput
+                            placeholder="Ex: "
+                            textBreakStrategy="highQuality"
+                            style={styles.placeholder2}
+                            paddingLeft={20}
+                            onChangeText={(text) => setHours(text)}
+                        ></TextInput>
 
-                    <Text style={styles.attachments}>{organization} </Text>
-                    <TouchableOpacity
-                        style={styles.placeholder1}
-                        onPress={() => setModalVisibility(true)}
-                    ></TouchableOpacity>
-                    <View style={styles.nextButton}>
+                        <Text style={styles.attachments}>{organization}</Text>
                         <TouchableOpacity
-                            style={styles.submitButton}
-                            onPress={() => submitHours()}
-                        >
-                            <Text style={styles.buttonText}>Submit</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <Modal visible={modalVisibility} style={{ flex: 1 }}>
-                        <View style={{ alignItems: 'center' }}>
-                            <Text>Add Attachments</Text>
-                            <View style={{ width: '60%' }}>
-                                <Button
-                                    title="close"
-                                    onPress={() => setModalVisibility(false)}
-                                />
-                            </View>
-                            <View style={styles.modalButtons}>
-                                <Button
-                                    title="Upload PDF"
-                                    onPress={() => documentPick()}
-                                    style={{ marginTop: 15 }}
-                                />
-                                <View style={{ marginTop: 15 }}>
+                            style={styles.placeholder1}
+                            onPress={() => setModalVisibility(true)}
+                        ></TouchableOpacity>
+                        <View style={styles.nextButton}>
+                            <TouchableOpacity
+                                style={styles.submitButton}
+                                onPress={() => submitHours()}
+                            >
+                                <Text>{}</Text>
+                                <Text style={styles.buttonText}>Submit</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <Modal visible={modalVisibility} style={{ flex: 1 }}>
+                            <View style={{ alignItems: 'center' }}>
+                                <Text>Add Attachments</Text>
+                                <View style={{ width: '60%' }}>
                                     <Button
-                                        title="Upload Link"
-                                        onPress={() => uploadLink()}
+                                        title="close"
+                                        onPress={() =>
+                                            setModalVisibility(false)
+                                        }
                                     />
                                 </View>
-                                <View style={{ marginTop: 15 }}>
+                                <View style={styles.modalButtons}>
                                     <Button
-                                        title="Take Image"
-                                        onPress={() => {
-                                            navigation.navigate('PictureScreen')
-                                        }}
+                                        title="Upload PDF"
+                                        onPress={() => documentPick()}
+                                        style={{ marginTop: 15 }}
                                     />
-                                </View>
-                                <View style={{ marginTop: 15 }}>
-                                    <Button
-                                        title="Upload Image"
-                                        onPress={() => pickImage()}
-                                    />
-                                    {maxImgFlag ? (
-                                        <Text
-                                            style={{
-                                                position: 'absolute',
-                                                top: '100%',
-                                                left: '0%',
+                                    <View style={{ marginTop: 15 }}>
+                                        <Button
+                                            title="Upload Link"
+                                            onPress={() => uploadLink()}
+                                        />
+                                    </View>
+                                    <View style={{ marginTop: 15 }}>
+                                        <Button
+                                            title="Take Image"
+                                            onPress={() => {
+                                                navigation.navigate(
+                                                    'PictureScreen'
+                                                )
                                             }}
-                                        >
-                                            MAX OF THREE IMAGES
-                                        </Text>
-                                    ) : null}
+                                        />
+                                    </View>
+                                    <View style={{ marginTop: 15 }}>
+                                        <Button
+                                            title="Upload Image"
+                                            onPress={() => pickImage()}
+                                        />
+                                        {maxImgFlag ? (
+                                            <Text
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: '100%',
+                                                    left: '0%',
+                                                }}
+                                            >
+                                                MAX OF THREE IMAGES
+                                            </Text>
+                                        ) : null}
+                                    </View>
                                 </View>
                             </View>
-                        </View>
-                        <View
-                            style={{
-                                position: 'absolute',
-                                top: '50%',
-                                left: '30%',
-                                flex: 1,
-                            }}
-                        >
-                            <FlatList
-                                style={{ flex: 1 }}
-                                data={attachments}
-                                renderItem={({ item, index }) => {
-                                    return (
-                                        <View>
-                                            <Image
-                                                source={{ uri: item }}
-                                                style={{
-                                                    height: 100,
-                                                    width: 100,
-                                                }}
-                                            />
-                                            <Button
-                                                title="X"
-                                                onPress={() =>
-                                                    removeAttachment(index)
-                                                }
-                                                style={{
-                                                    height: 100,
-                                                    width: 100,
-                                                }}
-                                            />
-                                        </View>
-                                    )
+                            <View
+                                style={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '30%',
+                                    flex: 1,
                                 }}
-                            />
-                        </View>
-                    </Modal>
+                            >
+                                <FlatList
+                                    style={{ flex: 1 }}
+                                    data={attachments}
+                                    renderItem={({ item, index }) => {
+                                        return (
+                                            <View>
+                                                <Image
+                                                    source={{ uri: item }}
+                                                    style={{
+                                                        height: 100,
+                                                        width: 100,
+                                                    }}
+                                                />
+                                                <Button
+                                                    title="X"
+                                                    onPress={() =>
+                                                        removeAttachment(index)
+                                                    }
+                                                    style={{
+                                                        height: 100,
+                                                        width: 100,
+                                                    }}
+                                                />
+                                            </View>
+                                        )
+                                    }}
+                                />
+                            </View>
+                        </Modal>
+                    </View>
                 </View>
             </View>
-        </View>
-    )
+        )
+    }
 }
 export default LogHoursSecond
 const styles = StyleSheet.create({
