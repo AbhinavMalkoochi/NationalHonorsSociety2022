@@ -10,7 +10,6 @@ import { createDrawerNavigator } from '@react-navigation/drawer'
 import 'firebase/auth'
 import LogHoursSecond from './LogHoursSecond'
 import StudentClassroomView from './StudentClassroomView'
-import App from '../App'
 import SettingsScreen from './SettingsScreen'
 const wait = (timeout) => {
     return new Promise((resolve) => {

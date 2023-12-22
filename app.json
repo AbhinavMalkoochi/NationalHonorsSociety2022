@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "nhs_app",
-    "slug": "nhs_app",
+    "name": "main",
+    "slug": "main",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

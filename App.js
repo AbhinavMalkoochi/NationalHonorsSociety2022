@@ -12,13 +12,14 @@ import { navigationRef } from './RootNavigation'
 import LogHoursScreen from './screens/logHours'
 import LogHoursSecond from './screens/LogHoursSecond'
 import apiKeys from './config/keys.js'
-import * as firebase from 'firebase'
+import firebase from "firebase/compat/app"
 import DrawerNav from './screens/dashboard'
 import StudentClassroomView from './screens/StudentClassroomView'
 import ClassroomScreen from './screens/classroom'
 import TeacherClassroomView from './screens/TeacherClassroomView'
 import StudentVolunteerInfo from './screens/StudentVolunteerInfo'
 import SettingsScreen from './screens/SettingsScreen'
+
 export default function App() {
     const Stack = createStackNavigator()
     if (!firebase.apps.length) {
